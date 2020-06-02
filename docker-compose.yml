@@ -1,0 +1,38 @@
+version: "3"
+services:
+  service:
+    build:
+      context: .
+    environment: 
+      - KAFKA_HOST=kafka:9092
+      - KAFKA_TOPIC=test_topic
+    ports: 
+      - "3000:3000"
+    depends_on: 
+      - kafka
+    volumes:
+      - ./:/usr/src/app
+  int-test:
+    build:
+      context: .
+    environment: 
+      - KAFKA_HOST=kafka:9092
+      - KAFKA_TOPIC=test_topic
+      - TEST_URL=service:3000
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+  kafka:
+    image: wurstmeister/kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      - KAFKA_ADVERTISED_HOST_NAME=kafka
+      - KAFKA_ADVERTISED_PORT=9092
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_CREATE_TOPICS=test_topic
+      - JMX_PORT=1099
+    
