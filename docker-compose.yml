@@ -1,8 +1,15 @@
 version: "3"
+
+networks:
+  app-tier:
+    driver: bridge
+
 services:
   service:
     build:
       context: .
+    networks:
+      - app-tier
     environment: 
       - KAFKA_HOST=kafka:9092
       - KAFKA_TOPIC=test_topic
@@ -20,19 +27,19 @@ services:
       - KAFKA_TOPIC=test_topic
       - TEST_URL=service:3000
   zookeeper:
-    image: wurstmeister/zookeeper
-    ports:
-      - "2181:2181"
-  kafka:
-    image: wurstmeister/kafka
-    ports:
-      - "9092:9092"
-    depends_on:
-      - zookeeper
+    image: 'bitnami/zookeeper:latest'
+    networks:
+      - app-tier
     environment:
-      - KAFKA_ADVERTISED_HOST_NAME=kafka
-      - KAFKA_ADVERTISED_PORT=9092
-      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
-      - KAFKA_CREATE_TOPICS=test_topic
-      - JMX_PORT=1099
+      - ALLOW_ANONYMOUS_LOGIN=yes
+  kafka:
+    image: 'bitnami/kafka:latest'
+    depends_on: 
+      - zookeeper
+    networks:
+      - app-tier
+    environment:
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
     

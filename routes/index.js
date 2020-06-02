@@ -7,12 +7,33 @@ const {
   KAFKA_TOPIC
 } = process.env
 
+console.log({
+  KAFKA_TOPIC,
+  KAFKA_HOST
+})
+
 const kafka = new Kafka({
   clientId: 'my-app',
+  ssl: false,
   brokers: [KAFKA_HOST]
 })
 
 const producer = kafka.producer()
+
+const consumer = kafka.consumer({ groupId: 'forager-producer' })
+
+consumer.connect().then(async ()=>{
+  await consumer.subscribe({ topic: KAFKA_TOPIC, fromBeginning: true })
+
+  await consumer.run({
+    eachMessage: async ({ topic, partition, message }) => {
+      console.log({
+        value: message.value.toString(),
+      })
+    },
+  })
+})
+
 
 router.get('/', async function(req, res, next) {
   try {
@@ -26,10 +47,10 @@ router.get('/', async function(req, res, next) {
 
     res.json({message: 'success'})
   } catch (error) {
-    res.json({message: 'success'})
+    res.json({message: 'error', stack: error.stack})
   }
-  
-  next()
 });
+
+
 
 module.exports = router;
